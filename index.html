@@ -53,6 +53,8 @@
   #brand { padding: 8px 14px; display: flex; align-items: center; gap: 12px; }
   #brand h1 { margin: 0; font: 400 24px/1 "Black Ops One", Impact, sans-serif; letter-spacing: 0.06em; }
   #brand h1 span { color: var(--red); margin-left: 6px; }
+  #hq { color: var(--muted); text-decoration: none; font-size: 14px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; white-space: nowrap; }
+  #hq:hover { color: var(--ink); border-color: var(--blue); }
   #badge { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--muted); letter-spacing: .05em; }
   #badge[data-kind="ok"] { background: rgba(93, 255, 176, 0.14); color: var(--ok); }
   #turn { padding: 8px 20px; font: 400 22px/1.1 "Black Ops One", Impact, sans-serif; letter-spacing: 0.05em; text-align: center; max-width: 46vw; }
@@ -139,7 +141,7 @@
 <canvas id="stage" tabindex="0" aria-label="The battle at sea. Move over the enemy grid to aim, click to fire."></canvas>
 
 <div id="top">
-  <div id="brand" class="panel"><h1>BATTLESHIP<span>3D</span></h1><span id="badge">2D preview</span></div>
+  <div id="brand" class="panel"><a id="hq" href="https://joehillthunder.github.io/" title="Back to DisplayXR HQ, the office with every demo">&#8592; HQ</a><h1>BATTLESHIP<span>3D</span></h1><span id="badge">2D preview</span></div>
   <div id="turn" class="panel" hidden role="status" aria-live="polite"></div>
   <div id="tools" class="panel">
     <label class="depth" title="How far things come out of and go into the 3D display">Depth <input id="depth" type="range" min="0" max="2" step="0.05" value="1"></label>
@@ -181,6 +183,7 @@
     <label>Computer skill <select id="level"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label>
     <label class="check"><input id="bonus" type="checkbox"> A hit earns another shot</label>
   </div>
+  <p class="fine">One of the <a href="https://joehillthunder.github.io/" style="color:var(--blue)">DisplayXR HQ</a> demos. Its room is in the Arcade.</p>
 </section>
 
 <section id="online" class="dialog" role="dialog" aria-labelledby="online-title" hidden>
