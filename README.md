@@ -4,7 +4,9 @@ Two-player Battleship on a golden-hour sea, built for glasses-free 3D with the D
 On a Leia display in the DisplayXR Browser, missile arcs, fireballs, flying debris, water columns
 and the HIT / SUNK banners come out of the screen. In any other browser it plays in 2D.
 
-Live: https://joehillthunder.github.io/displayxr-demos/apps/battleship/
+Live: https://joehillthunder.github.io/displayxr-battleship/
+
+One of the [DisplayXR demos](https://joehillthunder.github.io/) (its room is in the HQ Arcade). Static files, no build: serve the folder and open `index.html`.
 
 ## Modes
 
@@ -40,7 +42,7 @@ Plain ES modules, no build step. three 0.161 and `@displayxr/inline3d` 1.45.1 fr
 | `js/audio.js` | Synthesised sound (Web Audio): launches, whistles, explosions, splashes, sinking hulls, sonar. |
 | `js/main.js` | Game flow and UI. |
 
-No image, model or sound files: everything is generated in code, so there is nothing to add to `assets/LICENSES.md`.
+No image, model or sound files: everything is generated in code, so there are no third-party assets to license.
 
 Woven-canvas rules followed: one inline-3D session, one canvas that is never remounted, `will-change: transform`
 on it from first paint, an opaque cover that is removed (hard cut) on `firstWoven`, and no CSS effects or

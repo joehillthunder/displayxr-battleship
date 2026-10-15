@@ -1,0 +1,8 @@
+{
+  "id": "battleship",
+  "title": "Battleship 3D",
+  "wing": "arcade",
+  "blurb": "Two-player Battleship at sea: pass and play, online, or against the computer. Missiles, fireballs and wreckage rise out of the screen.",
+  "status": "live",
+  "sdk": { "three": "0.161.0", "@displayxr/inline3d": "1.45.1" }
+}
