@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { Stage } from './stage.js';
 import { createSky, createOcean, createLighting } from './ocean.js';
 import { FX } from './fx.js';
-import { Board, Reticle, GRID_Y } from './board.js';
+import { Board, Reticle, GRID_Y, makeShadow, DROP_H } from './board.js';
 import { ghostModel } from './ships.js';
 import { HIT, MISS, SUNK, shipCells } from './game.js';
 import { N, clamp, easeInOut, rand, sleep, cellName } from './util.js';
@@ -31,6 +31,7 @@ export class World {
     this.home = new Board(this.scene, this.fx, new THREE.Vector3(-BOARD_X, 0, 0), { name: 'YOUR FLEET', accent: 0x45c4ff });
     this.target = new Board(this.scene, this.fx, new THREE.Vector3(BOARD_X, 0, 0), { name: 'ENEMY WATERS', accent: 0xff7a4a });
     this.reticle = new Reticle(this.scene);
+    this.home.onSplash = () => this.sfx.splash();
     this.ghost = null;
 
     // camera state
@@ -69,11 +70,11 @@ export class World {
     } else if (name === 'place') {
       // the home board, sitting higher on screen to leave room for the placement bar
       look = this.home.center.clone().add(new THREE.Vector3(0, 0, 2.1));
-      halfW = 7.4; halfH = 7.6; el = 58 * DEG;
+      halfW = 6.9; halfH = 6.6; el = 50 * DEG;
     } else {
       const b = this.board(name);
       look = b.center.clone().add(new THREE.Vector3(0, 0, 0.45));
-      halfW = 7.4; halfH = 6.6; el = 54 * DEG;
+      halfW = 6.9; halfH = 5.9; el = 46 * DEG;
     }
     const dist = Math.max(halfW / Math.tan(hf), halfH / Math.tan(vf));
     const pos = look.clone().add(new THREE.Vector3(0, Math.sin(el), Math.cos(el)).multiplyScalar(dist));
@@ -145,7 +146,8 @@ export class World {
     this.home.update(dt, t);
     this.target.update(dt, t);
     this.reticle.update(dt, t);
-    if (this.ghost) this.ghost.position.y = 0.02 + Math.sin(t * 3) * 0.02;
+    // the ship you are placing hovers well above the board, out of the glass
+    if (this.ghost) this.ghost.position.y = DROP_H + Math.sin(t * 2.4) * 0.08;
     this.fx.update(dt);
     this.onTick?.(dt);
   }
@@ -220,8 +222,18 @@ export class World {
       this.ghost = ghostModel(id);
       this.home.group.add(this.ghost);
     }
+    if (!this.ghostShadow || this.ghostShadow.userData.key !== id + dir) {
+      if (this.ghostShadow) this.home.group.remove(this.ghostShadow);
+      this.ghostShadow = makeShadow(len, dir);
+      this.ghostShadow.material.opacity = 0.45;
+      this.ghostShadow.userData.key = id + dir;
+      this.home.group.add(this.ghostShadow);
+    }
     const p = this.home.shipCenterLocal(r, c, len, dir);
-    this.ghost.position.set(p.x, 0.02, p.z);
+    this.ghost.position.set(p.x, DROP_H, p.z);
+    this.home.resetTints();
+    for (const [a, b] of shipCells(r, c, len, dir)) if (a < N && b < N) this.home.setTint(a, b, ok ? [60, 255, 150, 120] : [255, 60, 60, 120]);
+    this.ghostShadow.position.set(p.x, 0.05, p.z);
     this.ghost.rotation.y = dir === 'v' ? -Math.PI / 2 : 0;
     this.ghost.userData.setValid(ok);
     this.ghost.visible = true;
@@ -229,6 +241,8 @@ export class World {
 
   hideGhost() {
     if (this.ghost) { this.home.group.remove(this.ghost); this.ghost = null; }
+    if (this.ghostShadow) { this.home.group.remove(this.ghostShadow); this.ghostShadow = null; }
+    this.home.resetTints();
   }
 
   // -------------------------------------------------------------------------------------------

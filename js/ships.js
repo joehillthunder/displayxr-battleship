@@ -229,9 +229,10 @@ function buildCarrier(team) {
   const i3 = box(0.18, 0.04, 0.085, m.steelDark); i3.position.set(0.06, 0.22, 0); island.add(i3);
   windows(island, 0.3, 0.18, 0.08, 6, 0.04);
   windows(island, 0.42, 0.09, 0.09, 8);
-  const mm = mast(0.22, team);
+  const mm = mast(0.34, team);
   mm.position.set(0.02, 0.24, 0);
   island.add(mm);
+  island.scale.y = 1.45;
   g.add(island);
   g.userData.spinners = [mm.userData.spinner];
   g.userData.flags = [mm.userData.flag];
@@ -378,17 +379,17 @@ function buildSubmarine(team) {
   // Sail (conning tower) with dive planes.
   const sail = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.18, 4, 12), m.sub);
   sail.rotation.z = Math.PI / 2;
-  sail.scale.set(1.4, 1, 0.55);
-  sail.position.set(0.45, 0.16, 0);
+  sail.scale.set(1.5, 1.45, 0.6);
+  sail.position.set(0.45, 0.2, 0);
   g.add(sail);
   const planes = box(0.06, 0.006, 0.26, m.sub);
-  planes.position.set(0.47, 0.18, 0);
+  planes.position.set(0.47, 0.23, 0);
   g.add(planes);
   const peri = cyl(0.006, 0.006, 0.12, m.steelDark, 6);
-  peri.position.set(0.42, 0.28, 0);
+  peri.position.set(0.42, 0.37, 0);
   g.add(peri);
   const mm = mast(0.1, team, false);
-  mm.position.set(0.52, 0.22, 0);
+  mm.position.set(0.52, 0.3, 0);
   g.add(mm);
   // Rudder and stern planes.
   const rud = box(0.12, 0.2, 0.008, m.sub);
@@ -409,34 +410,39 @@ function buildSubmarine(team) {
 const BUILDERS = {
   carrier: buildCarrier,
   battleship: (team) => buildGunship(team, {
-    L: 3.75, B: 0.46, free: 0.11, wood: true,
+    L: 3.75, B: 0.46, free: 0.13, wood: true,
     turrets: [[1.05, false, 3, 1.15], [0.68, false, 3, 1.15], [-1.05, true, 3, 1.15]],
-    decks: [[0.05, 0.85, 0.08, 0.3], [0.12, 0.55, 0.07, 0.24, 0.08], [0.18, 0.28, 0.07, 0.18, 0.15]],
-    funnels: [[-0.32, 0.06, 0.22, 0.06]],
-    masts: [[0.26, 0.36, 0.2], [-0.62, 0.22, 0.02]],
+    decks: [[0.05, 0.9, 0.1, 0.32], [0.12, 0.6, 0.1, 0.26, 0.1], [0.16, 0.38, 0.1, 0.2, 0.2], [0.2, 0.2, 0.09, 0.16, 0.3]],
+    funnels: [[-0.32, 0.068, 0.32, 0.08]],
+    masts: [[0.21, 0.58, 0.39], [-0.62, 0.34, 0.03]],
   }),
   cruiser: (team) => buildGunship(team, {
-    L: 2.8, B: 0.38, free: 0.1,
+    L: 2.8, B: 0.38, free: 0.12,
     turrets: [[0.8, false, 2, 0.95], [-0.82, true, 2, 0.95]],
-    decks: [[0.15, 0.7, 0.07, 0.24], [0.25, 0.32, 0.07, 0.18, 0.07]],
-    funnels: [[-0.12, 0.05, 0.17, 0.06], [-0.34, 0.05, 0.15, 0.04]],
-    masts: [[0.3, 0.32, 0.14]],
+    decks: [[0.15, 0.75, 0.09, 0.26], [0.25, 0.38, 0.09, 0.2, 0.09], [0.28, 0.2, 0.08, 0.15, 0.18]],
+    funnels: [[-0.12, 0.056, 0.25, 0.08], [-0.34, 0.056, 0.21, 0.06]],
+    masts: [[0.29, 0.5, 0.26]],
   }),
   submarine: buildSubmarine,
   destroyer: (team) => buildGunship(team, {
-    L: 1.85, B: 0.3, free: 0.09,
+    L: 1.85, B: 0.3, free: 0.11,
     turrets: [[0.52, false, 1, 0.8]],
-    decks: [[0.08, 0.5, 0.065, 0.19], [0.14, 0.22, 0.06, 0.14, 0.065]],
-    funnels: [[-0.22, 0.045, 0.13, 0.05]],
-    masts: [[0.16, 0.28, 0.125]],
+    decks: [[0.08, 0.55, 0.085, 0.21], [0.14, 0.26, 0.08, 0.16, 0.085]],
+    funnels: [[-0.22, 0.05, 0.2, 0.06]],
+    masts: [[0.15, 0.44, 0.165]],
   }),
 };
+
+export const SHIP_LIFT = 1.6;
 
 /** A ship model for fleet `team` (0 blue, 1 red). */
 export function buildShip(id, team = 0) {
   const g = BUILDERS[id](team);
   g.name = id;
-  g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+  // Toy-model proportions: taller and a little beamier than life, so the ships stand up out of
+  // the sea (and out of the glass) instead of reading as flat shapes on the water.
+  g.scale.set(1, SHIP_LIFT, 1.22);
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return g;
 }
 
@@ -467,7 +473,7 @@ const ghostMats = {
 };
 export function ghostModel(id) {
   const g = buildShip(id, 0);
-  g.traverse((o) => { if (o.isMesh) o.material = ghostMats.ok; });
+  g.traverse((o) => { if (o.isMesh) { o.material = ghostMats.ok; o.castShadow = o.receiveShadow = false; } });
   g.userData.setValid = (ok) => g.traverse((o) => { if (o.isMesh) o.material = ok ? ghostMats.ok : ghostMats.bad; });
   return g;
 }

@@ -215,10 +215,7 @@ function placeAt(r, c) {
   if (!G.sel) return;
   const ship = me.fleet.place(G.sel, r, c, G.dir);
   if (!ship) { sfx.click(220); toast("It doesn't fit there"); return; }
-  world.home.addShip(ship, me.team);
-  const p = world.home.cellWorld(r, c);
-  world.fx.ripple(world.home.shipCenterLocal(ship.r, ship.c, ship.len, ship.dir).add(world.home.center), 1.6);
-  world.fx.ripple(p, 0.8);
+  world.home.addShip(ship, me.team, { drop: true });
   sfx.clunk();
   G.sel = FLEET.find((d) => !me.fleet.ships.some((s) => s.id === d.id))?.id || null;
   renderChips();
@@ -236,7 +233,7 @@ $('#random').addEventListener('click', () => {
   const me = G.P[G.viewer];
   me.fleet.randomize();
   for (const id of [...world.home.ships.keys()]) world.home.removeShip(id);
-  me.fleet.ships.forEach((s, i) => setTimeout(() => { world.home.addShip(s, me.team); world.fx.ripple(world.home.shipCenterLocal(s.r, s.c, s.len, s.dir).add(world.home.center), 1.4); sfx.clunk(); }, i * 110));
+  me.fleet.ships.forEach((s, i) => setTimeout(() => { world.home.addShip(s, me.team, { drop: true }); sfx.clunk(); }, i * 140));
   G.sel = null;
   renderChips();
   world.hideGhost();

@@ -205,14 +205,16 @@ export class Board {
   // -------------------------------------------------------------------------------------------
   // ships
 
-  addShip(ship, team, { wreck = false, hidden = false } = {}) {
+  /** `drop`: the ship rises out of the glass first, then falls into the sea with a splash. */
+  addShip(ship, team, { wreck = false, hidden = false, drop = false } = {}) {
     this.removeShip(ship.id);
     const model = buildShip(ship.id, team);
     if (ship.dir === 'v') model.rotation.y = -Math.PI / 2;
     const base = this.shipCenterLocal(ship.r, ship.c, ship.len, ship.dir);
-    const entry = { model, ship, team, base, wreck: 0, sinkT: 0, roll: rand(-1, 1), phase: rand(0, 6), smoke: [] };
+    const shadow = makeShadow(ship.len, ship.dir);
+    const entry = { model, ship, team, base, shadow, wreck: 0, sinkT: 0, dropT: drop ? 0 : 1, roll: rand(-1, 1), phase: rand(0, 6), smoke: [] };
     model.userData.yaw = model.rotation.y;
-    this.group.add(model);
+    this.group.add(model, shadow);
     this.ships.set(ship.id, entry);
     for (const p of model.userData.smoke || []) {
       const e = this.fx.addEmitter(p, 'funnel');
@@ -228,6 +230,7 @@ export class Board {
     const e = this.ships.get(id);
     if (!e) return;
     this.group.remove(e.model);
+    this.group.remove(e.shadow);
     for (const s of e.smoke) this.fx.removeEmitter(s);
     this.ships.delete(id);
   }
@@ -315,7 +318,22 @@ export class Board {
       waveSlope(wx, wz, t, slope);
       if (e.sinking && e.sinkT < 1) e.sinkT = Math.min(1, e.sinkT + dt / 3.2);
       const s = e.sinking ? 1 - Math.pow(1 - e.sinkT, 2) : 0;
-      m.position.set(e.base.x, h + (m.userData.ride || 0) - s * (e.ship.id === 'submarine' ? 0.12 : 0.17), e.base.z);
+      // drop-in: hang above the board (out of the glass), then fall and splash
+      let lift = 0;
+      if (e.dropT < 1) {
+        e.dropT = Math.min(1, e.dropT + dt / 0.7);
+        lift = DROP_H * (1 - e.dropT * e.dropT);
+        if (e.dropT >= 1) {
+          const p = new THREE.Vector3(wx, 0.05, wz);
+          this.fx.splash(p, 0.45);
+          this.fx.ripple(p, e.ship.len * 0.7, 1.4);
+          this.onSplash?.();
+        }
+      }
+      m.position.set(e.base.x, h + (m.userData.ride || 0) - s * (e.ship.id === 'submarine' ? 0.12 : 0.17) + lift, e.base.z);
+      const sh = e.shadow;
+      sh.position.set(e.base.x, waveHeight(wx, wz, t) + 0.035, e.base.z);
+      sh.material.opacity = (1 - Math.min(1, lift / DROP_H) * 0.8) * (1 - s * 0.6);
       // pitch and roll with the swell, plus a list as it sinks
       const yaw = m.userData.yaw;
       const along = e.ship.dir === 'h' ? slope.x : slope.y;
@@ -414,3 +432,52 @@ export class Reticle {
 }
 
 export { ghostModel };
+
+// ---------------------------------------------------------------------------------------------
+// Contact shadow + foam collar under each hull, so ships sit in the water instead of floating
+// over it, and read as solid objects standing up off the sea.
+
+const DROP_H = 1.3;
+let shadowTex;
+function shadowTexture() {
+  if (shadowTex) return shadowTex;
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 128;
+  const x = c.getContext('2d');
+  const ell = (rx, ry, stops) => {
+    x.save();
+    x.translate(256, 64);
+    x.scale(rx / 64, ry / 64);
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, 64);
+    for (const [o, col] of stops) g.addColorStop(o, col);
+    x.fillStyle = g;
+    x.beginPath(); x.arc(0, 0, 64, 0, Math.PI * 2); x.fill();
+    x.restore();
+  };
+  // dark core
+  ell(250, 62, [[0, 'rgba(0,10,20,0.75)'], [0.55, 'rgba(0,10,20,0.45)'], [1, 'rgba(0,10,20,0)']]);
+  // foam collar: speckled white ring hugging the hull
+  for (let i = 0; i < 700; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = 0.62 + Math.random() * 0.28;
+    const px = 256 + Math.cos(a) * 235 * r, py = 64 + Math.sin(a) * 52 * r;
+    x.fillStyle = `rgba(235,245,255,${0.08 + Math.random() * 0.22})`;
+    x.beginPath(); x.arc(px, py, 1.5 + Math.random() * 3.5, 0, Math.PI * 2); x.fill();
+  }
+  shadowTex = new THREE.CanvasTexture(c);
+  shadowTex.colorSpace = THREE.SRGBColorSpace;
+  return shadowTex;
+}
+
+function makeShadow(len, dir) {
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(len * 1.02, 0.78),
+    new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, depthWrite: false, toneMapped: false }),
+  );
+  m.rotation.x = -Math.PI / 2;
+  if (dir === 'v') m.rotation.z = -Math.PI / 2;
+  m.renderOrder = 2;
+  return m;
+}
+
+export { makeShadow, DROP_H };

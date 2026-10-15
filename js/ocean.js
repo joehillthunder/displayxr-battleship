@@ -195,9 +195,18 @@ export function createLighting(renderer, scene, sky) {
   const hemi = new THREE.HemisphereLight(0xc6d6ff, 0x16324a, 1.1);
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9b0, 2.0);
-  sun.position.copy(SUN_DIR).multiplyScalar(60);
+  sun.position.copy(SUN_DIR).multiplyScalar(40);
+  // Ships shadow themselves (turrets and bridges across the decks). One map covers both boards.
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -18, right: 18, top: 12, bottom: -12, near: 1, far: 90 });
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.01;
+  sun.shadow.camera.updateProjectionMatrix();
+  scene.add(sun.target);
   scene.add(sun);
-  const fill = new THREE.DirectionalLight(0x6f8fd0, 0.6);
+  // fill from the viewer's side, so the hull sides and bridge faces turned to you are lit
+  const fill = new THREE.DirectionalLight(0x8fa8e0, 1.15);
   fill.position.set(10, 14, 20);
   scene.add(fill);
 

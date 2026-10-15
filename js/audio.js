@@ -101,8 +101,10 @@ export class Sfx {
     o.stop(t + dur + 0.05);
   }
 
-  thump(peak, f0, t = this.ctx.currentTime) {
+  thump(peak, f0, t) {
+    if (!this.ctx) return;
     const ctx = this.ctx;
+    t ??= ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sine';
     o.frequency.setValueAtTime(f0, t);

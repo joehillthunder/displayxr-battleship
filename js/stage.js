@@ -43,6 +43,10 @@ export class Stage {
     r.toneMapping = THREE.ACESFilmicToneMapping;
     r.toneMappingExposure = 1.0;
     r.setClearColor(0x0b1424, 1);
+    // One shadow pass per frame, shared by both eyes.
+    r.shadowMap.enabled = true;
+    r.shadowMap.type = THREE.PCFSoftShadowMap;
+    r.shadowMap.autoUpdate = false;
 
     this.scene = new THREE.Scene();
     // The app camera is IN the scene: the eye cameras hang off it (attach pattern), and three only
@@ -150,6 +154,7 @@ export class Stage {
     this.step();
     this.handle.setViewRig(this.currentRig());
     this.scene.updateMatrixWorld();
+    this.renderer.shadowMap.needsUpdate = true;
     const r = this.renderer;
     r.setScissorTest(false);
     r.clear();
@@ -173,6 +178,7 @@ export class Stage {
       requestAnimationFrame(loop);
       this.step();
       const r = this.renderer;
+      r.shadowMap.needsUpdate = true;
       r.setViewport(0, 0, this.canvas.width, this.canvas.height);
       r.clear();
       this.onEye(this.canvas.height);

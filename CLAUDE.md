@@ -52,6 +52,11 @@ player-facing description.
 - **Online protocol** (`onNet`): `hello {name, rules}` → both place → `placed` → `shot {r,c}` /
   `result {r,c,hit,sunk,allSunk}` → at the end, `fleet {ships}` (so the loser sees the remaining
   ships) and `rematch`. Each side keeps its fleet secret and answers shots itself.
+- **Ships stand up out of the glass.** `SHIP_LIFT` in `ships.js` (1.6) stretches every model vertically
+  (and 1.22 across) so the ships read as solid and stereo-pop; turrets, bridges and masts are taller than
+  life on purpose. Each ship has a contact shadow + foam collar (`makeShadow` in `board.js`) and casts
+  real shadows on itself (one 2048 sun shadow map per frame, shared by both eyes). Placed ships hover at
+  `DROP_H` (out of the glass) as a ghost, then drop in with a splash (`addShip(..., { drop: true })`).
 - **Effects are pooled.** Spawn through `fx.add/smoke/spray.spawn(...)`, and run per-frame work with
   `fx.task(fn)` (return `false` when done). Point-sprite size is in world units: the shader scales
   it by the per-eye viewport height, set through `stage.onEye`.
@@ -96,6 +101,8 @@ touched turn flow or `net.js`) a pass-and-play round and an online exchange.
 
 ## Gotchas
 
+- Every `Sfx` method must return early when `this.ctx` is null (no click yet, e.g. `?watch`): one
+  unguarded call threw inside a strike and stalled the whole turn queue.
 - Additive particles saturate to white fast. Keep fire alphas around 0.4–0.55 and grow the size instead.
 - The ocean mesh spacing must stay well under the shortest vertex wavelength, or the far water
   aliases into stripes. Short ripples go only in the fragment normal.
